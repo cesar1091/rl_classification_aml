@@ -47,8 +47,8 @@ reinforcement-aml/
 
 1. Clonar el repositorio:
 ```bash
-git clone https://github.com/tu_usuario/reinforcement-aml.git
-cd reinforcement-aml
+git clone https://github.com/cesar1091/rl_classification_aml.git
+cd rl_classification_aml
 ````
 
 2. Crear y activar entorno virtual:
