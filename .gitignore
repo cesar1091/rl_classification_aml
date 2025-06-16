@@ -2,3 +2,39 @@
 /data/*
 /data/raw/*
 /data/processed/*
+
+# Python cache
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+*.pkl
+
+# Virtual environment
+.venv/
+env/
+venv/
+
+# Jupyter Notebook checkpoints
+.ipynb_checkpoints/
+
+# VSCode settings (optional, remove if not using VSCode)
+.vscode/
+
+# Logs and debugging
+*.log
+
+# MLflow artifacts
+mlruns/
+mlruns.db
+
+# Model artifacts
+models/*.zip
+
+# Data (optional: keep raw data tracked, ignore generated/processed)
+data/processed/
+data/raw/
+
+# System files
+.DS_Store
+Thumbs.db

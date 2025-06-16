@@ -4,6 +4,7 @@ import numpy as np
 from stable_baselines3 import PPO
 from stable_baselines3.common.callbacks import EvalCallback
 from stable_baselines3.common.env_checker import check_env
+from sklearn.metrics import accuracy_score, precision_score, recall_score, f1_score
 import mlflow
 
 from aml_env import AmlEnv  # Importing the custom environment
@@ -47,8 +48,9 @@ def load_agent(env: gym.Env):
     return model
 
 def evaluate_agent(model, env, episodes=20):
+    y_true = []
+    y_pred = []
     rewards = []
-    correct = 0
 
     for ep in range(episodes):
         obs, _ = env.reset()
@@ -58,19 +60,34 @@ def evaluate_agent(model, env, episodes=20):
             action, _states = model.predict(obs, deterministic=True)
             obs, reward, done, _, info = env.step(action)
             total_reward += reward
-            correct += int(action == info["true_label"])  # 1 if correct
+            y_true.append(info["true_label"])
+            y_pred.append(action)
+
+        rewards.append(total_reward)
+
 
         rewards.append(total_reward)
         print(f"Episode {ep+1}: Reward = {total_reward}")
 
+    # Calculate metrics
+    acc = accuracy_score(y_true, y_pred)
+    prec = precision_score(y_true, y_pred, zero_division=0)
+    rec = recall_score(y_true, y_pred, zero_division=0)
+    f1 = f1_score(y_true, y_pred, zero_division=0)
     avg_reward = np.mean(rewards)
-    accuracy = correct / episodes
 
-    print(f"🔍 Average reward: {avg_reward:.2f}")
-    print(f"✅ Accuracy: {accuracy*100:.2f}%")
+    print(f"📊 Evaluation Metrics:")
+    print(f"Accuracy:  {acc:.4f}")
+    print(f"Precision: {prec:.4f}")
+    print(f"Recall:    {rec:.4f}")
+    print(f"F1 Score:  {f1:.4f}")
+    print(f"Avg Reward:{avg_reward:.2f}")
     with mlflow.start_run(run_name="PPO_Agent_Evaluation"):
+        mlflow.log_metric("accuracy_eval", acc)
+        mlflow.log_metric("precision_eval", prec)
+        mlflow.log_metric("recall_eval", rec)
+        mlflow.log_metric("f1_score_eval", f1)
         mlflow.log_metric("avg_reward_eval", avg_reward)
-        mlflow.log_metric("accuracy_eval", accuracy)
 
 if __name__ == "__main__":
     train_env = AmlEnv(ENV_PATH, split="train")
