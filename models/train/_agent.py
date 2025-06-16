@@ -18,10 +18,11 @@ os.makedirs(MODEL_DIR, exist_ok=True)
 def train_agent(env: gym.Env, timesteps: int = 100_000):
     check_env(env, warn=True)
 
+    eval_env = AmlEnv(ENV_PATH, split="eval")  # aquí separamos para evaluación durante training
     model = PPO("MlpPolicy", env, verbose=1)
 
-    eval_callback = EvalCallback(env, best_model_save_path=MODEL_DIR,
-                                 log_path=MODEL_LOG_DIR, eval_freq=5000,
+    eval_callback = EvalCallback(eval_env, best_model_save_path=MODEL_DIR,
+                                 log_path=MODEL_DIR, eval_freq=5000,
                                  deterministic=True, render=False)
 
     with mlflow.start_run(run_name="PPO_Agent_Training"):
@@ -36,6 +37,7 @@ def train_agent(env: gym.Env, timesteps: int = 100_000):
         print("✅ Model trained and saved.")
         return model
 
+
 def load_agent(env: gym.Env):
     path = os.path.join(MODEL_DIR, MODEL_NAME + ".zip")
     if not os.path.exists(path):
@@ -46,26 +48,36 @@ def load_agent(env: gym.Env):
 
 def evaluate_agent(model, env, episodes=20):
     rewards = []
+    correct = 0
+
     for ep in range(episodes):
         obs, _ = env.reset()
         done = False
         total_reward = 0
         while not done:
             action, _states = model.predict(obs, deterministic=True)
-            obs, reward, done, _, _ = env.step(action)
+            obs, reward, done, _, info = env.step(action)
             total_reward += reward
+            correct += int(action == info["true_label"])  # 1 if correct
+
         rewards.append(total_reward)
         print(f"Episode {ep+1}: Reward = {total_reward}")
 
     avg_reward = np.mean(rewards)
-    print(f"🔍 Average reward over {episodes} episodes: {avg_reward:.2f}")
-    mlflow.log_metric("avg_reward_eval", avg_reward)
+    accuracy = correct / episodes
+
+    print(f"🔍 Average reward: {avg_reward:.2f}")
+    print(f"✅ Accuracy: {accuracy*100:.2f}%")
+    with mlflow.start_run(run_name="PPO_Agent_Evaluation"):
+        mlflow.log_metric("avg_reward_eval", avg_reward)
+        mlflow.log_metric("accuracy_eval", accuracy)a
 
 if __name__ == "__main__":
-    env = AmlEnv(ENV_PATH)
+    train_env = AmlEnv(ENV_PATH, split="train")
+    eval_env = AmlEnv(ENV_PATH, split="eval")
 
-    # Training phase
-    model = train_agent(env)
+    # Entrenamiento
+    model = train_agent(train_env)
 
-    # Evaluation phase
-    evaluate_agent(model, env)
+    # Evaluación
+    evaluate_agent(model, eval_env)
