@@ -70,7 +70,7 @@ def evaluate_agent(model, env, episodes=20):
     print(f"✅ Accuracy: {accuracy*100:.2f}%")
     with mlflow.start_run(run_name="PPO_Agent_Evaluation"):
         mlflow.log_metric("avg_reward_eval", avg_reward)
-        mlflow.log_metric("accuracy_eval", accuracy)a
+        mlflow.log_metric("accuracy_eval", accuracy)
 
 if __name__ == "__main__":
     train_env = AmlEnv(ENV_PATH, split="train")
