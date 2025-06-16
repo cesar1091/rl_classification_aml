@@ -1,4 +1,4 @@
 # data
-./data/*
-./data/raw/*
-./data/processed/*
+/data/*
+/data/raw/*
+/data/processed/*

@@ -8,4 +8,4 @@ farama-notifications>=0.0.1
 array-api-compat>=1.11.0
 gymnasium==0.29.1
 stable-baselines3==2.2.1
-
+mlflow==2.13.0
